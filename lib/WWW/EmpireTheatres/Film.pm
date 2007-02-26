@@ -6,15 +6,15 @@ WWW::EmpireTheatres::Film - A class representing a film
 
 =head1 SYNOPSIS
 
-	# where is the film playing?
-	for my $cinema ( @{ $film->cinemas } ) {
-		printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
-	}
+    # where is the film playing?
+    for my $cinema ( @{ $film->cinemas } ) {
+        printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
+    }
 
-	# when is it playing?
-	for my $showtime ( @{ $film->showtimes( cinema => $cinema ) } ) {
-		printf( "%s\n", $showtime->datetime );
-	}
+    # when is it playing?
+    for my $showtime ( @{ $film->showtimes( cinema => $cinema ) } ) {
+        printf( "%s\n", $showtime->datetime );
+    }
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ use URI;
 use HTML::TokeParser::Simple;
 use Carp;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 __PACKAGE__->mk_accessors( qw( title link parent id ) );
 
@@ -47,10 +47,10 @@ Find out when $film is playing @ $cinema.
 =cut
 
 sub showtimes {
-	my $self    = shift;
-	my %options = @_;
+    my $self    = shift;
+    my %options = @_;
 
-	return $options{ cinema }->showtimes( film => $self, @_ );
+    return $options{ cinema }->showtimes( film => $self, @_ );
 }
 
 =head2 cinemas( )
@@ -60,51 +60,51 @@ Find out which cinemas have this film.
 =cut
 
 sub cinemas {
-	my $self = shift;
-	my %options = @_;
-	my $agent   = $self->parent->agent;
-	my $link    = $self->link;
+    my $self = shift;
+    my %options = @_;
+    my $agent   = $self->parent->agent;
+    my $link    = $self->link;
 
-	my $uri     = URI->new( $link );
-	my %query   = $uri->query_form;
+    my $uri     = URI->new( $link );
+    my %query   = $uri->query_form;
 
-	if( $options{ date } ) {
-		$query{ Day } = $options{ date };
+    if( $options{ date } ) {
+        $query{ Day } = $options{ date };
 
-		$uri->query_form( \%query );
+        $uri->query_form( \%query );
 
-		$link = $uri->as_string;
-	}
-	else {
-		$options{ date } = $query{ Day };
-	}
+        $link = $uri->as_string;
+    }
+    else {
+        $options{ date } = $query{ Day };
+    }
 
 
-	$agent->get( $link );
-	croak( 'Error fetching listings' ) unless $agent->success;
-	my $parser = HTML::TokeParser::Simple->new( string => $agent->content );
+    $agent->get( $link );
+    croak( 'Error fetching listings' ) unless $agent->success;
+    my $parser = HTML::TokeParser::Simple->new( string => $agent->content );
 
-	my @results;
+    my @results;
 
-	if( $agent->content =~ /Sorry, this movie is not playing on the selected day/ ) {
-		return \@results;
-	}
+    if( $agent->content =~ /Sorry, this movie is not playing on the selected day/ ) {
+        return \@results;
+    }
 
-	while( my $token = $parser->get_token ) {
-		next unless $token->is_start_tag( 'font' ) and $token->get_attr( 'color' ) and $token->get_attr( 'color' ) eq '#FFFFFF';
+    while( my $token = $parser->get_token ) {
+        next unless $token->is_start_tag( 'font' ) and $token->get_attr( 'color' ) and $token->get_attr( 'color' ) eq '#FFFFFF';
 
-		while( $token = $parser->get_token ) {
-			last if $token->is_start_tag( 'img' ) and $token->get_attr( 'src' ) eq 'images/spacer.gif';
-			next unless $token->is_start_tag( 'a' );
+        while( $token = $parser->get_token ) {
+            last if $token->is_start_tag( 'img' ) and $token->get_attr( 'src' ) eq 'images/spacer.gif';
+            next unless $token->is_start_tag( 'a' );
 
-			my $uri   = URI->new( $token->get_attr( 'href' ) );
-			my %query = $uri->query_form;
+            my $uri   = URI->new( $token->get_attr( 'href' ) );
+            my %query = $uri->query_form;
 
-			push @results, $self->parent->cinema( id => $query{ TH_ID } || $query{ th_id } );
-		}
-	}
+            push @results, $self->parent->cinema( id => $query{ TH_ID } || $query{ th_id } );
+        }
+    }
 
-	return \@results;
+    return \@results;
 }
 
 =head2 title( )
@@ -133,7 +133,7 @@ The parent WWW::EmpireTheatres object.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005 by Brian Cassidy
+Copyright 2007 by Brian Cassidy
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 

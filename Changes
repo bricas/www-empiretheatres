@@ -1,15 +1,18 @@
 Revision history for Perl extension WWW::EmpireTheatres
 
+0.05  Mon Feb 26 2007
+    - repackaged -- no functional changes
+
 0.04  Thu Mar 03 10:30:04 2005
-	- handle and test films not playing on the current day
+    - handle and test films not playing on the current day
 
 0.03  Wed Mar 02 16:43:51 2005
-	- added some more tests
-	- fixed some html parsing bugs
+    - added some more tests
+    - fixed some html parsing bugs
 
 0.02  Wed Mar 02 11:07:42 2005
-	- added pod_coverage test
+    - added pod_coverage test
 
 0.01  Fri Dec 10 10:36:05 2004
-	- original version
+    - original version
 

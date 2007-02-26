@@ -6,37 +6,37 @@ WWW::EmpireTheatres - Get film listings for the Empire Theatres cinema chain
 
 =head1 SYNOPSIS
 
-	use WWW::EmpireTheatres;
-	
-	my $empire = WWW::EmpireTheatres->new;
+    use WWW::EmpireTheatres;
+    
+    my $empire = WWW::EmpireTheatres->new;
 
-	# what films are currently playing in all locations
-	for my $film ( @{ $empire->films } ) {
-		printf( "%s\n", $film->title );
-	}
+    # what films are currently playing in all locations
+    for my $film ( @{ $empire->films } ) {
+        printf( "%s\n", $film->title );
+    }
 
-	# what locations are there?
-	for my $cinema ( @{ $empire->cinemas } ) {
-		printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
-	}
+    # what locations are there?
+    for my $cinema ( @{ $empire->cinemas } ) {
+        printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
+    }
 
-	my $film   = $empire->film( title => 'SpongeBob' );
-	my $cinema = $empire->cinema( city => 'Fredericton' );
+    my $film   = $empire->film( title => 'SpongeBob' );
+    my $cinema = $empire->cinema( city => 'Fredericton' );
 
-	# get today's showtimes for SpongeBob @ Fredericton
-	for my $showtime ( @{ $cinema->showtimes( film => $film ) } ) {
-		printf( "%s\n", $showtime->datetime );
-	}
+    # get today's showtimes for SpongeBob @ Fredericton
+    for my $showtime ( @{ $cinema->showtimes( film => $film ) } ) {
+        printf( "%s\n", $showtime->datetime );
+    }
 
-	# where is the film playing?
-	for my $cinema ( @{ $film->cinemas } ) {
-		printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
-	}
+    # where is the film playing?
+    for my $cinema ( @{ $film->cinemas } ) {
+        printf( "%s (%s, %s)\n", $cinema->name, $cinema->city, $cinema->province );
+    }
 
-	# what films are playing?
-	for my $film ( @{ $cinema->films } ) {
-		printf( "%s\n", $film->title );
-	}
+    # what films are playing?
+    for my $film ( @{ $cinema->films } ) {
+        printf( "%s\n", $film->title );
+    }
 
 =head1 DESCRIPTION
 
@@ -61,7 +61,7 @@ use constant BASE_URL    => 'http://www.empiretheatres.com';
 use constant FILMS_URL   => BASE_URL . '/showtimes/by_movie.asp';
 use constant CINEMAS_URL => BASE_URL . '/theatres/by_theatre.asp';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 __PACKAGE__->mk_accessors( qw( films cinemas agent ) );
 
@@ -74,16 +74,16 @@ Creates a new object and gets the film and cinema listing.
 =cut
 
 sub new {
-	my $class = shift;
-	my $self  = { };
+    my $class = shift;
+    my $self  = { };
 
-	bless $self, $class;
+    bless $self, $class;
 
-	$self->agent( WWW::Mechanize->new );
+    $self->agent( WWW::Mechanize->new );
 
-	$self->get_listings;
+    $self->get_listings;
 
-	return $self;
+    return $self;
 }
 
 =head2 get_listings( )
@@ -94,163 +94,163 @@ automatically called when new() is called.
 =cut
 
 sub get_listings {
-	my $self  = shift;
-	my $agent = $self->agent;
-	my $parser;
+    my $self  = shift;
+    my $agent = $self->agent;
+    my $parser;
 
-	$agent->get( FILMS_URL );
-	croak( 'Error fetching listings' ) unless $agent->success;
-	$parser = HTML::TokeParser::Simple->new( string => $agent->content );
-	$parser->unbroken_text( 1 );
+    $agent->get( FILMS_URL );
+    croak( 'Error fetching listings' ) unless $agent->success;
+    $parser = HTML::TokeParser::Simple->new( string => $agent->content );
+    $parser->unbroken_text( 1 );
 
-	my @films;
-	while( my $token = $parser->get_token ) {
-		unless(
-			$token->is_start_tag( 'a' ) and
-			$token->get_attr( 'href' ) =~ /^\/theatres\/new_showtime_by_movie1\.asp\?movie=/
-		) {
-			next;
-		}
+    my @films;
+    while( my $token = $parser->get_token ) {
+        unless(
+            $token->is_start_tag( 'a' ) and
+            $token->get_attr( 'href' ) =~ /^\/theatres\/new_showtime_by_movie1\.asp\?movie=/
+        ) {
+            next;
+        }
 
-		my $link  = $token->get_attr( 'href' );
-		$token    = $parser->get_token;
+        my $link  = $token->get_attr( 'href' );
+        $token    = $parser->get_token;
 
-		my $title = $token->as_is;
-		$title    =~ s/\s+\(.*\)//;
+        my $title = $token->as_is;
+        $title    =~ s/\s+\(.*\)//;
 
-		my $uri   = URI->new( $link );
-		my %query = $uri->query_form;
+        my $uri   = URI->new( $link );
+        my %query = $uri->query_form;
 
-		push @films, WWW::EmpireTheatres::Film->new( {
-			id     => $query{ m_id },
-			parent => $self,
-			title  => $title,
-			link   => BASE_URL . $link
-		} );
-	}
+        push @films, WWW::EmpireTheatres::Film->new( {
+            id     => $query{ m_id },
+            parent => $self,
+            title  => $title,
+            link   => BASE_URL . $link
+        } );
+    }
 
-	$self->films( @films );
+    $self->films( @films );
 
-	$agent->get( CINEMAS_URL );
-	croak( 'Error fetching listings' ) unless $agent->success;
-	$parser = HTML::TokeParser::Simple->new( string => $agent->content );
-	$parser->unbroken_text( 1 );
+    $agent->get( CINEMAS_URL );
+    croak( 'Error fetching listings' ) unless $agent->success;
+    $parser = HTML::TokeParser::Simple->new( string => $agent->content );
+    $parser->unbroken_text( 1 );
 
-	my @cinemas;
-	my $capture = 0;
-	while( my $token = $parser->get_token ) {
-		if(
-			not $capture and
-			$token->is_start_tag( 'td' ) and
-			defined $token->get_attr( 'class' ) and
-			$token->get_attr( 'class' ) eq 'etbody'
-		) {
-			$capture = 1;
-		}
+    my @cinemas;
+    my $capture = 0;
+    while( my $token = $parser->get_token ) {
+        if(
+            not $capture and
+            $token->is_start_tag( 'td' ) and
+            defined $token->get_attr( 'class' ) and
+            $token->get_attr( 'class' ) eq 'etbody'
+        ) {
+            $capture = 1;
+        }
 
-		next unless $capture;
+        next unless $capture;
 
-		# Skip to province name
-		$token = $parser->get_token;
-		$token = $parser->get_token;
+        # Skip to province name
+        $token = $parser->get_token;
+        $token = $parser->get_token;
 
-		my $province = $token->as_is;
+        my $province = $token->as_is;
 
-		my @temp;
+        my @temp;
 
-		# parse locations
-		while( my $token = $parser->get_token ) {
-			last if $token->is_end_tag( 'td' );
+        # parse locations
+        while( my $token = $parser->get_token ) {
+            last if $token->is_end_tag( 'td' );
 
-			if( @temp and $token->is_start_tag( 'br' ) ) {
-				$temp[ -1 ]->{ count } += 0.5;
-			}
-			elsif( $token->is_text ) {
-				my $text = $token->as_is;
-				$text =~ s/^\s+(&nbsp;)+|\s+$//gs;
-				next unless $text;
+            if( @temp and $token->is_start_tag( 'br' ) ) {
+                $temp[ -1 ]->{ count } += 0.5;
+            }
+            elsif( $token->is_text ) {
+                my $text = $token->as_is;
+                $text =~ s/^\s+(&nbsp;)+|\s+$//gs;
+                next unless $text;
 
-				$temp[ -1 ]->{ count } = int( $temp[ -1 ]->{ count } ) if @temp;
+                $temp[ -1 ]->{ count } = int( $temp[ -1 ]->{ count } ) if @temp;
 
-				push @temp, { city => $text, count => 0 };
-			}
-		}
+                push @temp, { city => $text, count => 0 };
+            }
+        }
 
-		# parse names
-		my $loc   = 0;
-		my $count = 0;
-		while( my $token = $parser->get_token ) {
-			last if $token->is_end_tag( 'td' );
-			next unless $token->is_start_tag( 'a' );
-			my $link = $token->get_attr( 'href' );
+        # parse names
+        my $loc   = 0;
+        my $count = 0;
+        while( my $token = $parser->get_token ) {
+            last if $token->is_end_tag( 'td' );
+            next unless $token->is_start_tag( 'a' );
+            my $link = $token->get_attr( 'href' );
 
-			$token = $parser->get_token;
+            $token = $parser->get_token;
 
-			next if $token->as_is =~ /<img/;
+            next if $token->as_is =~ /<img/;
 
-			my $name  = $token->as_is;
+            my $name  = $token->as_is;
 
-			$token = $parser->get_token;
+            $token = $parser->get_token;
 
-			if( $token->as_is =~ /<br/ ) {
-				$token = $parser->get_token;
-				$name .= ' ' . $token->as_is;
-			}			
+            if( $token->as_is =~ /<br/ ) {
+                $token = $parser->get_token;
+                $name .= ' ' . $token->as_is;
+            }            
 
-			my $uri   = URI->new( BASE_URL . $link );
-			my %query = $uri->query_form;
+            my $uri   = URI->new( BASE_URL . $link );
+            my %query = $uri->query_form;
 
-			push @cinemas, WWW::EmpireTheatres::Cinema->new( {
-				parent   => $self,
-				id       => $query{ TH_ID } || $query{ th_id },
-				link     => $uri->as_string,
-				name     => $name,
-				province => $province,
-				city     => $temp[ $loc ]->{ city }
-			} );
+            push @cinemas, WWW::EmpireTheatres::Cinema->new( {
+                parent   => $self,
+                id       => $query{ TH_ID } || $query{ th_id },
+                link     => $uri->as_string,
+                name     => $name,
+                province => $province,
+                city     => $temp[ $loc ]->{ city }
+            } );
 
-			$count++;
+            $count++;
 
-			if( $loc != $#temp and $count >= $temp[ $loc ]->{ count } ) {
-				$count = 0;
-				$loc++;
-			}
-		}
+            if( $loc != $#temp and $count >= $temp[ $loc ]->{ count } ) {
+                $count = 0;
+                $loc++;
+            }
+        }
 
-		$capture = 0;
-	}
+        $capture = 0;
+    }
 
-	$self->cinemas( @cinemas );
+    $self->cinemas( @cinemas );
 }
 
 =head2 film( %options )
 
 This allows you to search for a film. You can pass a portion of the title and/or it's internal id.
 
-	# Christmas With The Kranks
-	$empire->film( title => 'Kranks' );
+    # Christmas With The Kranks
+    $empire->film( title => 'Kranks' );
 
 =cut
 
 sub film {
-	my $self    = shift;
-	my %options = @_;
+    my $self    = shift;
+    my %options = @_;
 
-	for( @{ $self->films } ) {
-		my $match = 1;
-		for my $field ( qw( title id ) ) {
-			if( $options{ $field } ) {
-				if( $field eq 'id' and $options{ id } !=  $_->id ) {
-					$match = 0;
-				}
-				if( $field eq 'title' and lc( $_->title ) !~  /$options{ title }/i ) {
-					$match = 0;
-				}
-			}
-		}
+    for( @{ $self->films } ) {
+        my $match = 1;
+        for my $field ( qw( title id ) ) {
+            if( $options{ $field } ) {
+                if( $field eq 'id' and $options{ id } !=  $_->id ) {
+                    $match = 0;
+                }
+                if( $field eq 'title' and lc( $_->title ) !~  /$options{ title }/i ) {
+                    $match = 0;
+                }
+            }
+        }
 
-		return $_ if $match;
-	}
+        return $_ if $match;
+    }
 }
 
 =head2 cinema( %options )
@@ -258,28 +258,28 @@ sub film {
 This allows you to search for a cinema. You can pass the name, city, provice and/or
 the internal id. It returns the first successful match.
 
-	# Empire 10 Cinemas Regent Mall, Fredericton, New Brunswick
-	$empire->cinema( city => 'Fredericton' );
+    # Empire 10 Cinemas Regent Mall, Fredericton, New Brunswick
+    $empire->cinema( city => 'Fredericton' );
 
 =cut
 
 
 sub cinema {
-	my $self   = shift;
-	my %options = @_;
+    my $self   = shift;
+    my %options = @_;
 
-	for( @{ $self->cinemas } ) {
-		my $match = 1;
-		for my $field ( qw( province city name id ) ) {
-			if( $options{ $field } ) {
-				if( lc( $options{ $field } ) ne lc( $_->$field ) ) {
-					$match = 0;
-				}
-			}
-		}
+    for( @{ $self->cinemas } ) {
+        my $match = 1;
+        for my $field ( qw( province city name id ) ) {
+            if( $options{ $field } ) {
+                if( lc( $options{ $field } ) ne lc( $_->$field ) ) {
+                    $match = 0;
+                }
+            }
+        }
 
-		return $_ if $match;
-	}
+        return $_ if $match;
+    }
 }
 
 =head2 showtimes( film => $film, cinema => $cimena [, date => $date ] )
@@ -290,10 +290,10 @@ is specified)
 =cut
 
 sub showtimes {
-	my $self    = shift;
-	my %options = @_;
+    my $self    = shift;
+    my %options = @_;
 
-	return $options{ cinema }->showtimes( @_ );
+    return $options{ cinema }->showtimes( @_ );
 }
 
 =head2 films( )
@@ -318,7 +318,7 @@ Returns the internal WWW::Mechanize object
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005 by Brian Cassidy
+Copyright 2007 by Brian Cassidy
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
