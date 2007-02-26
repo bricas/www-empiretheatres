@@ -14,7 +14,7 @@ my $build = Module::Build->new(
         'URI'                      => 0,
         'HTML::TokeParser::Simple' => 3,
     },
-    build_requres      => {
+    build_requires     => {
         'Test::More'       => 0,
         'Test::MockModule' => 0,
     }
